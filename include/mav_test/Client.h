@@ -53,6 +53,19 @@
 #define BROADCAST_IP "192.168.101.255" // LOCAL_BROADCAST
 #define NETID 4		//自己的IP
 
+// Task State Machine Definitions
+#define TASK_NONE 0
+//#define TASK_WAIT_TAKEOFF_SIGNAL 1
+#define TASK_DO_ARMING 1
+#define TASK_DO_DISARMING 2
+#define TASK_DO_SET_GUIDED_MODE 3
+#define TASK_DO_TAKEOFF 4
+#define TASK_WAIT_FOR_STABLE 5
+#define TASK_DO_NAV_CONTROL 6
+#define TASK_DO_LAND 7
+#define TASK_FINISH 8
+#define TASK_DO_SET_HOME 9
+
 using namespace std;
 using std::string;
 
