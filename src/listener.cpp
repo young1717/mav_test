@@ -77,118 +77,124 @@ int main(int argc, char **argv)
 			ROS_INFO("Change the mode to GUIDED successfully!");
 	}
 
-//	uint8_t task_state = 0;
-//	while(true){
-//		switch(task_state){
-//			case TASK_DO_ARMING:
-//			{
-//				if(uav_state->armed)
-//					task_state = TASK_DO_SET_GUIDED_MODE;
-//				break;
-//			}
-//			case TASK_DO_DISARMING:
-//			{
-//				if(uav_state->armed)
-//					Command(DISARMING, 0, NONE);
-//				else
-//					task_state = TASK_FINISH;
-//				printf("TASK_DO_DISARMING\r\n");
-//				break;
-//			}
-//			case TASK_DO_SET_GUIDED_MODE:
-//			{
-//				if(!uav_state->guided)
-//					Command(SETMODE, 0, GUIDED);
-//				else if(uav_state->custom_mode == GUIDED && raw.hdop < 2)
-//					task_state = TASK_DO_SET_HOME;
-//				else
-//				{
-//					task_state = TASK_FINISH;
-//				}
-//				printf("TASK_DO_SET_GUIDED_MODE\r\n");
-//				break;
-//			}
-//			case TASK_DO_SET_HOME:
-//			{
-//				if(uav_state->armed && uav_state->guided)
-//				{
-//					Command(SET_HOME_AS_CUR_POSITION, 0, NONE);
-//					Global_Pos home_p = uas.get_curpos();
-//					uas.update_home_pos(home_p);
-//					
-//					task_state = TASK_DO_TAKEOFF;
-//					/*static Global_Pos origin = uas.get_home_pos();//起点经纬度
-//					for(int i = 0;i < NUM_TARGET;i++)
-//					{
-//						way_gpoint[i] = get_latlon_from_xy(origin, way_lpoint[i]*100);
-//					}*/
-//				}
-//				printf("TASK_DO_SET_HOME\r\n");
-//				break;
-//			}
-//			case TASK_DO_TAKEOFF:
-//			{
-//				if(uav_state->armed && uav_state->guided)
-//				{
-//					Command(TAKEOFF, ALT_CONSTANT, NONE);
-//					gettimeofday(&tv, &tz);
-//					uas.update_task_first_time(tv);
-//					task_state = TASK_WAIT_FOR_STABLE;
-//				}
-//				printf("TASK_DO_TAKEOFF\r\n");
-//				break;
-//			}
-//			case TASK_WAIT_FOR_STABLE:
-//			{
-//				gettimeofday(&cur_time, &tz);
-//				first_time = uas.get_task_first_time();
-//				float delta_ms = float(cur_time.tv_sec - first_time.tv_sec)*1e3 + float(cur_time.tv_usec - first_time.tv_usec)/1e3;
-//				if(delta_ms > 1e4)
-//				{
-//					task_state = TASK_DO_NAV_CONTROL;
-//				}
-//				printf("TASK_WAIT_FOR_STABLE\r\n");
-//				break;
-//			}
-//			case TASK_DO_NAV_CONTROL:
-//			{
-//				if(uav_state->armed && uav_state->guided)
-//				{
-//					left_right_flag = formation();
-//					/*if(finish)
-//					{
-//						task_state = TASK_DO_LAND;
-//					}*/
-//				}else if(!uav_state->armed)
-//				{
-//					task_state = TASK_FINISH;
-//				}
-//				printf("TASK_DO_NAV_CONTROL\r\n");
-//				break;
-//			}
-//			case TASK_DO_LAND:
-//			{
-//				if(uav_state->armed && uav_state->guided)
-//				{
-//					Command(LAND, 0, NONE);
-//					task_state = TASK_FINISH;
-//				}
-//				printf("TASK_DO_LAND\r\n");
-//				break;
-//			}
-//			case TASK_FINISH:
-//			{
-//				if(!uav_state->armed)
-//					task_state = TASK_DO_ARMING;
-//				printf("TASK_FINISH\r\n");
-//				break;
-//			}
-//			default:
-//			{
-//				task_state = TASK_DO_ARMING;
-//			}
-//		}
-//	}
+	uint8_t task_state = 0;
+	while(true){
+		switch(task_state){
+			case TASK_DO_ARMING:
+			{
+				if(uav_state->armed)
+					task_state = TASK_DO_SET_GUIDED_MODE;
+				break;
+			}
+			case TASK_DO_DISARMING:
+			{
+				if(uav_state->armed){
+					arm_srv.request.value = false;
+					if(arm_client.call(arm_src))
+						ROS_INFO("DisArm!");
+					else
+						ROS_WARN("DisArm didn't finish!");
+				}else
+					task_state = TASK_FINISH;
+				printf("TASK_DO_DISARMING\r\n");
+				break;
+			}
+			case TASK_DO_SET_GUIDED_MODE:
+			{
+				if(!uav_state->guided){
+					mode_srv.request.custom_mode = "GUIDED";
+					if(mode_client.call(mode_srv))
+						ROS_INFO("Turn to GUIDED!");
+					else
+						ROS_WARN("GUIDED failed!");
+				}else if(uav_state->guided&&uav_state->armed)
+					task_state = TASK_DO_SET_HOME;
+				else
+					task_state = TASK_FINISH;
+				printf("TASK_DO_SET_GUIDED_MODE\r\n");
+				break;
+			}
+			case TASK_DO_SET_HOME:
+			{
+				if(uav_state->armed && uav_state->guided)
+				{
+					Command(SET_HOME_AS_CUR_POSITION, 0, NONE);
+					Global_Pos home_p = uas.get_curpos();
+					uas.update_home_pos(home_p);
+					
+					task_state = TASK_DO_TAKEOFF;
+					/*static Global_Pos origin = uas.get_home_pos();//起点经纬度
+					for(int i = 0;i < NUM_TARGET;i++)
+					{
+						way_gpoint[i] = get_latlon_from_xy(origin, way_lpoint[i]*100);
+					}*/
+				}
+				printf("TASK_DO_SET_HOME\r\n");
+				break;
+			}
+			case TASK_DO_TAKEOFF:
+			{
+				if(uav_state->armed && uav_state->guided)
+				{
+					Command(TAKEOFF, ALT_CONSTANT, NONE);
+					gettimeofday(&tv, &tz);
+					uas.update_task_first_time(tv);
+					task_state = TASK_WAIT_FOR_STABLE;
+				}
+				printf("TASK_DO_TAKEOFF\r\n");
+				break;
+			}
+			case TASK_WAIT_FOR_STABLE:
+			{
+				gettimeofday(&cur_time, &tz);
+				first_time = uas.get_task_first_time();
+				float delta_ms = float(cur_time.tv_sec - first_time.tv_sec)*1e3 + float(cur_time.tv_usec - first_time.tv_usec)/1e3;
+				if(delta_ms > 1e4)
+				{
+					task_state = TASK_DO_NAV_CONTROL;
+				}
+				printf("TASK_WAIT_FOR_STABLE\r\n");
+				break;
+			}
+			case TASK_DO_NAV_CONTROL:
+			{
+				if(uav_state->armed && uav_state->guided)
+				{
+					left_right_flag = formation();
+					/*if(finish)
+					{
+						task_state = TASK_DO_LAND;
+					}*/
+				}else if(!uav_state->armed)
+				{
+					task_state = TASK_FINISH;
+				}
+				printf("TASK_DO_NAV_CONTROL\r\n");
+				break;
+			}
+			case TASK_DO_LAND:
+			{
+				if(uav_state->armed && uav_state->guided)
+				{
+					Command(LAND, 0, NONE);
+					task_state = TASK_FINISH;
+				}
+				printf("TASK_DO_LAND\r\n");
+				break;
+			}
+			case TASK_FINISH:
+			{
+				if(!uav_state->armed)
+					task_state = TASK_DO_ARMING;
+				printf("TASK_FINISH\r\n");
+				break;
+			}
+			default:
+			{
+				task_state = TASK_DO_ARMING;
+			}
+		}
+	}
 
 	mavlink_message_t message;
 	mavlink_status_t status;
