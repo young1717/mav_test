@@ -1,6 +1,15 @@
 #include "Client.h"
 
-void UAV::update_uav_global_pos(const sensor_msgs::NavSatFix::ConstPtr& msg)
+void UAV::update_uav_state(const mavros_msgs::StatePtr msg)
+{
+	lock_gd lock(mutx);
+	uav_state.connected = msg->connected;
+	uav_state.armed = msg->armed;
+	uav_state.guided = msg->guided;
+	uav_state.mode = msg->mode;
+}
+
+void UAV::update_uav_global_pos(const sensor_msgs::NavSatFixPtr msg)
 {
 	lock_gd lock(mutx);
 	self_global_pos.lat = msg->latitude;
@@ -8,8 +17,16 @@ void UAV::update_uav_global_pos(const sensor_msgs::NavSatFix::ConstPtr& msg)
 	self_global_pos.alt = msg->altitude;
 }
 
+void UAV::update_uav_vel(const geometry_msgs::TwistStampedPtr msg)
+{
+	lock_gd lock(mutx);
+	self_global_pos.vx = msg->twist.linear.x;
+	self_global_pos.vy = msg->twist.linear.y;
+	self_global_pos.vz = msg->twist.linear.z;
+}
 
-void UAV::update_nei_global_pos(const mav_test::Global_Position_INT &msg, uint16_t flag)
+
+void UAV::update_nei_global_pos(const mav_test::Global_Position_INT& msg, uint16_t flag)
 {
 	lock_gd lock(mutx);
 
@@ -19,6 +36,18 @@ void UAV::update_nei_global_pos(const mav_test::Global_Position_INT &msg, uint16
 	else if(iter != neighbours_global_pos.end())
 		iter->second = msg;
 	neighbours_flag |= 1<<flag;
+}
+
+mavros_msgs::State UAV::get_uav_state(void)
+{
+	lock_gd lock(mutx);
+	return uav_state;
+}
+
+mav_test::Global_Position_INT UAV::get_global_pos(void)
+{
+	lock_gd lock(mutx);
+	return self_global_pos;
 }
 
 mav_test::Global_Position_INT UAV::get_neighbours_state(uint16_t flag)

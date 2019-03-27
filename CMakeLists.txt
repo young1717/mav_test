@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   sensor_msgs
   mavros_msgs
+  geometry_msgs
 )
 
 find_package(GLIB2  REQUIRED)

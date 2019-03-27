@@ -20,7 +20,6 @@ MessageSig udp_sig;
 
 typedef std::lock_guard<std::recursive_mutex> lock_gd;*/
 
-UAV uav;
 //ros::Publisher leader_global_pos_pub;
 //ros::Publisher leader_sync_pub;
 //ros::Publisher neighbour_state_pub;
@@ -171,9 +170,9 @@ void* udp_send(void* ptr)
 	return NULL;
 }
 */
-void Global_Pos_Callback(const sensor_msgs::NavSatFix::ConstPtr& msg)
+void Global_Pos_Callback(const sensor_msgs::NavSatFixPtr msg)
 {
-	uav.update_uav_global_pos(msg);
+	
 }
 
 //UDP variate
@@ -204,7 +203,7 @@ int main(int argc, char **argv)
 	}
     connect(clientSock, (struct sockaddr *)&destAddr, sizeof(struct sockaddr_in)); // Connect Server
 	
-	ros::Subscriber global_pos_sub = nh.subscribe<sensor_msgs::NavSatFix>("/mavros/global_position/global", 100, Global_Pos_Callback);
+	ros::Subscriber global_pos_sub = nh.subscribe("/mavros/global_position/raw/fix", 100, Global_Pos_Callback);
 	
 	//这部分程序是建立串口监听程序,一直接收串口数据,并进行处理
 	/*int* ptr = NULL;

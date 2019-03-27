@@ -6,6 +6,9 @@
 
 #include <signal.h>
 
+//thread lib
+#include <thread>
+
 // udp libs
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -46,7 +49,18 @@
 #include <vector>
 
 #include "mav_test/Global_Position_INT.h"
+//topic type
+#include "mavros_msgs/State.h"
 #include "sensor_msgs/NavSatFix.h"
+#include "geometry_msgs/TwistStamped.h"
+//service type
+#include "mavros_msgs/SetMode.h"		///mavros/set_mode
+#include "mavros_msgs/CommandBool.h"	///mavros/cmd/arming
+#include "mavros_msgs/CommandTOL.h"		///mavros/cmd/takeoff
+#include "mavros_msgs/CommandHome.h"	///mavros/cmd/set_home
+#include "mavros_msgs/CommandLong.h"	///mavros/command(_long)
+#include "mavros_msgs/CommandInt.h"		///mavros/command_int
+#include "mavros_msgs/StreamRate.h"		///mavros/set_stream_rate
 
 #define BUFFER_LENGTH 2048 // minimum buffer size that can be used with qnx
 #define LISTEN_PORT  2030
@@ -73,12 +87,18 @@ namespace sig2 = boost::signals2;
 typedef sig2::signal<void(uint8_t *buf, ssize_t recsize, int ipflag)> MessageSig;
 typedef std::lock_guard<std::recursive_mutex> lock_gd;
 
+
 class UAV
 {
 public:
 	UAV(){}
-	void update_uav_global_pos(const sensor_msgs::NavSatFix::ConstPtr& msg);
+	void update_uav_state(const mavros_msgs::StatePtr msg);
+	void update_uav_global_pos(const sensor_msgs::NavSatFixPtr msg);
+	void update_uav_vel(const geometry_msgs::TwistStampedPtr msg);
 	void update_nei_global_pos(const mav_test::Global_Position_INT &msg, uint16_t flag);
+
+	mavros_msgs::State get_uav_state(void);
+	mav_test::Global_Position_INT get_global_pos(void);
 	mav_test::Global_Position_INT get_neighbours_state(uint16_t flag);
 	mav_test::Global_Position_INT get_neighbours_state2(uint16_t flag);
 	uint16_t get_neighbours_num();
@@ -88,6 +108,7 @@ public:
 private:
 	std::recursive_mutex mutx;
 	
+	mavros_msgs::State uav_state;
 	mav_test::Global_Position_INT self_global_pos;
 
 	std::map<uint16_t, mav_test::Global_Position_INT> neighbours_global_pos;
@@ -95,4 +116,5 @@ private:
 	uint16_t last_neighbours_flag;
 };
 
+extern UAV uav;
 
