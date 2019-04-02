@@ -1,0 +1,7 @@
+<launch>
+
+	<include file="$(find mavros)/launch/px4.launch"></include>
+	<!--<node pkg="geese_formation" name="sim0" type="Server"></node>-->
+	<node pkg="geese_formation" name="sim1" type="Formation_UAV" output="screen"></node>
+
+</launch>

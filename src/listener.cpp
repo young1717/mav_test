@@ -128,16 +128,16 @@ int main(int argc, char **argv)
 					ROS_INFO("TASK_DO_SET_GUIDED_MODE");
 					old_task_state = task_state;
 				}
-				if(!uav_state.guided){
+				if(!uav_state.armed)
+					task_state = TASK_FINISH;
+				else if(!uav_state.guided){
 					mode_srv.request.custom_mode = "GUIDED";
 					if(mode_client.call(mode_srv))
 						ROS_INFO("Turn to GUIDED!");
 					else
 						ROS_WARN("GUIDED failed!");
-				}else if(uav_state.guided&&uav_state.armed)
+				}else
 					task_state = TASK_DO_SET_HOME;
-				else
-					task_state = TASK_FINISH;
 				break;
 			}
 			case TASK_DO_SET_HOME:
@@ -146,12 +146,14 @@ int main(int argc, char **argv)
 					ROS_INFO("TASK_DO_SET_HOME");
 					old_task_state = task_state;
 				}
-				if(uav_state.armed && uav_state.guided)
-				{
+				if(!uav_state.armed)
+					task_state = TASK_FINISH;
+				else if(uav_state.guided){
 					home_srv.request.current_gps = true;
 					if(home_client.call(home_srv)&&home_srv.response.success)
 						task_state = TASK_DO_TAKEOFF;
-				}
+				}else
+					task_state = TASK_DO_SET_GUIDED_MODE;
 				break;
 			}
 			case TASK_DO_TAKEOFF:
@@ -160,11 +162,13 @@ int main(int argc, char **argv)
 					ROS_INFO("TASK_DO_TAKEOFF");
 					old_task_state = task_state;
 				}
-				if(uav_state.armed && uav_state.guided)
-				{
+				if(!uav_state.armed)
+					task_state = TASK_FINISH;
+				else if(uav_state.guided){
 					if(takeoff_client.call(takeoff_srv)&&takeoff_srv.response.success)
 						task_state = TASK_WAIT_FOR_STABLE;
-				}
+				}else
+					task_state = TASK_DO_SET_GUIDED_MODE;
 				break;
 			}
 			case TASK_WAIT_FOR_STABLE:
@@ -182,17 +186,16 @@ int main(int argc, char **argv)
 					ROS_INFO("TASK_DO_NAV_CONTROL");
 					old_task_state = task_state;
 				}
-				if(uav_state.armed && uav_state.guided)
-				{
+				if(!uav_state.armed)
+					task_state = TASK_FINISH;
+				else if(uav_state.guided){
 					//left_right_flag = formation();
 					/*if(finish)
 					{
 						task_state = TASK_DO_LAND;
 					}*/
-				}else if(!uav_state.armed)
-				{
-					task_state = TASK_FINISH;
-				}
+				}/*else
+					task_state = TASK_FINISH;*/
 				break;
 			}
 			case TASK_DO_LAND:
