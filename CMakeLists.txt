@@ -20,8 +20,10 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(GLIB2  REQUIRED)
 find_package(GTHREAD2  REQUIRED)
 
+find_package(OpenCV REQUIRED)
+
 ## System dependencies are found with CMake's conventions
-#find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -134,6 +136,7 @@ include_directories(
   ${GLIB2_MAIN_INCLUDE_DIR}
   ${GLIB2_INTERNAL_INCLUDE_DIR}
   ${GTHREAD2_MAIN_INCLUDE_DIR}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -152,6 +155,7 @@ include_directories(
 add_executable(listener src/listener.cpp src/UAV.cpp)
 #add_executable(Server src/Server.cpp)
 add_executable(Client src/Client.cpp  src/UAV.cpp)
+add_executable(Vison src/Vison.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -176,6 +180,12 @@ target_link_libraries(Client
 	${GLIB2_LIBRARY}
   	${GTHREAD2_LIBRARY}
 	${catkin_LIBRARIES}
+)
+target_link_libraries(Vison
+	${GLIB2_LIBRARY}
+  	${GTHREAD2_LIBRARY}
+	${catkin_LIBRARIES}
+	${OpenCV_LIBS}
 )
 #############
 ## Install ##
